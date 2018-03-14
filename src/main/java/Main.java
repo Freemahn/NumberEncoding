@@ -12,11 +12,11 @@ public class Main {
 
     public Main() {
         ClassLoader classLoader = getClass().getClassLoader();
-//        File inputFile = new File(classLoader.getResource("myinput.txt").getFile());
-//        File dictionaryFile = new File(classLoader.getResource("mydict.txt").getFile());
-
-        File inputFile = new File(classLoader.getResource("input_small.txt").getFile());
-        File dictionaryFile = new File(classLoader.getResource("dictionary_small.txt").getFile());
+        File inputFile = new File(classLoader.getResource("myinput.txt").getFile());
+        File dictionaryFile = new File(classLoader.getResource("mydict.txt").getFile());
+//
+//        File inputFile = new File(classLoader.getResource("input_small.txt").getFile());
+//        File dictionaryFile = new File(classLoader.getResource("dictionary_small.txt").getFile());
         dictionary = readFile(dictionaryFile)
                 .stream()
                 .map(s -> s.replace("\"", "").replace("-", ""))
@@ -44,15 +44,11 @@ public class Main {
     }
 
     private void findEncodings(String number) {
-//        System.out.println("findEncodings( " + number + " ) called");
+//        //System.out.println("findEncodings( " + number + " ) called");
         String preparedNumber = number
                 .replace("-", "")
                 .replace("/", "");
         String num = preparedNumber;
-        // try without digits
-//        List<String> tempDictionary = narrowDictionary(new ArrayList<>(dictionary),
-//                num, 0, 0, "");
-//        char[] arr = {};
         List<PartialEncoding> tempDictionary = getAllPartialEncodings(num, new PartialEncoding());
         tempDictionary.forEach(encoding ->
                 System.out.println(number + ": " + encoding.getBeautyString())
@@ -60,29 +56,39 @@ public class Main {
     }
 
 
-    List<PartialEncoding> getAllPartialEncodings(String num, PartialEncoding partialEncoding) {
-        if (num.length() == partialEncoding.getString().length()) {
-//            System.out.println(num + " is fully encoded by " + partialEncoding.getBeautyString());
-            return Collections.singletonList(partialEncoding);
+    List<PartialEncoding> getAllPartialEncodings(String num, PartialEncoding currentEncoding) {
+        if (num.length() == currentEncoding.getString().length()) {
+            //System.out.println(num + " is fully encoded by " + currentEncoding.getBeautyString());
+            return Collections.singletonList(currentEncoding);
         }
-
-//        System.out.println("getAllPartialEncodings " + num + ", encoded part: " + partialEncoding.getString());
         List<PartialEncoding> result = new ArrayList<>();
-        //narrow with first letter of word
-        List<String> smallDictionary = narrowDict(num, dictionary, partialEncoding.getString().length(), 0);
-        //TODO if smallDictionary is empty then try digit
-        if (smallDictionary.isEmpty()) {
-//            System.out.println("Cant encode");
-            return Collections.emptyList();
-        }
+        int numOffset = currentEncoding.getString().length();
+        //System.out.println("getAllPartialEncodings " + num + ", encoded part: " + currentEncoding.getBeautyString());
+
+        //narrow with first non-encoded letter of word
+        List<String> smallDictionary = narrowDict(num, dictionary, numOffset, 0);
+
+
         for (String word : smallDictionary) {
-            if (isPartiallyEncoding(num, word, partialEncoding.getString().length(), 0)) {
-//                System.out.println("Found partially encoding num " + num +  "; Already encoded " + partialEncoding.getBeautyString() + " + " + word);
-                List<PartialEncoding> r = getAllPartialEncodings(num, partialEncoding.addWord(word));
+            if (isPartiallyEncoding(num, word, currentEncoding.getString().length(), 0)) {
+                //System.out.println("Found partially encoding num " + num + "; Already encoded " + currentEncoding.getBeautyString() + " + " + word);
+                PartialEncoding pe = PartialEncoding.from(currentEncoding);
+                pe.addWord(word);
+                pe.isLastTokenDigit = false;
+                List<PartialEncoding> r = getAllPartialEncodings(num, pe);
                 result.addAll(r);
-                partialEncoding = new PartialEncoding();
 
             }
+        }
+
+        if (smallDictionary.isEmpty() && !currentEncoding.isLastTokenDigit) {
+            //System.out.println("Try digit " + num.charAt(numOffset));
+            currentEncoding.addDigit(num.charAt(numOffset));
+            currentEncoding.isLastTokenDigit = true;
+            List<PartialEncoding> r = getAllPartialEncodings(num, currentEncoding);
+            result.addAll(r);
+            return result;
+
         }
         return result;
     }
@@ -154,7 +160,7 @@ public class Main {
     public static void main(String[] args) {
         Main obj = new Main();
         obj.proceed();
-        System.out.println("Bye");
+//        //System.out.println("Bye");
     }
 
 }
