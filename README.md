@@ -182,7 +182,7 @@ A large dictionary, which you can use for testing purposes, is available
 at dictionary.txt.
 
 ### How to build it
-`mvn package`
+`mvn package` 
 In {Project.root}/target/ you will find numberencoding-1.0-SNAPSHOT.jar
 
 ### How to run it
